@@ -1,0 +1,88 @@
+You're first responsible for planning, and then, based on that plan, generating the teaching webpage. I want to create an educational webpage that teaches a specific chemistry problem. You are the instructional web designer (planner), in charge of the overall structural layout, interaction design, visual guidance, and pedagogical flow.
+
+
+This webpage should not only help students solve a specific problem:
+
+<problem>
+
+
+It must also gradually build students’ skills in scientific modeling, abstract reasoning, and analogical transfer. You should specifically design both near-transfer and far-transfer problems to assess and reinforce the transfer of conceptual understanding across different chemistry contexts.
+The instruction should be student-centered, progressive, and guided, encouraging hands-on interaction and conceptual visualization.
+Make sure to include:
+•	Real-world or lab-based scenarios that contextualize the problem meaningfully.
+•	Interactive visual aids (molecular models, reaction diagrams, simulations).
+•	Use of the Concrete–Representational–Abstract (CRA) approach to help students move from observable phenomena to symbolic reasoning.
+•	Step-by-step scaffolding strategies (e.g., F.O.P.S – Find, Organize, Plan, Solve) for building scientific reasoning and solving the problem.
+•	Opportunities for students to practice metacognitive strategies (e.g., “What do I know?”, “What principles apply?”, “How do I check my answer?”).
+Your goal is to make the webpage instructionally rich, visually engaging, and transfer-focused, helping learners master both the core problem and the deeper conceptual structures that support scientific thinking.
+Instructional Structure Plan (for Chemistry Content Delivery)
+________________________________________
+1. Helping Students Understand the Context:
+•	Use realistic or semi-realistic chemistry scenarios (e.g., a lab experiment, a medical application, an industrial process) to provide immersion and relevance.
+•	Incorporate simple illustrations, molecular diagrams, lab equipment visuals, comic-style characters (like a student scientist or a lab assistant), or infographics to visually guide students into the problem’s real-world context.
+•	Teachers should explicitly point out the connection between physical substances and abstract concepts, such as relating bubbling gas to reaction rates, or connecting solution color to chemical equilibrium.
+________________________________________
+2. Expressing the Information Accurately:
+•	Teach students to organize chemical information using visual and symbolic tools, such as:
+o	Molecular structure diagrams
+o	Reaction pathway flowcharts
+o	Lab procedure schematics
+o	Particle-level illustrations
+o	Tables for molar ratios, pH values, concentrations, etc.
+•	Apply the Concrete–Representational–Abstract (CRA) model:
+o	Concrete: Demonstrate with observable phenomena (e.g., color change, gas release, precipitate formation).
+o	Representational: Use particle diagrams, chemical equations, or models.
+o	Abstract: Transition to symbolic representations (balanced equations, formulas, stoichiometric calculations).
+•	Encourage students to verbalize their chemical reasoning using “Think Aloud” strategies—for example, explaining what happens at the particle level when an acid is added to a base.
+________________________________________
+3. Guiding Students to Build Scientific Models:
+•	Break down complex chemical problems (e.g., multi-step stoichiometry, limiting reactants, Le Chatelier’s Principle) into smaller, scaffolded steps:
+o	Identify what's happening (physical change? redox? equilibrium shift?)
+o	Use diagrams or equations to represent the system
+o	Plan stepwise reasoning (e.g., molar ratio → calculate moles → convert to mass)
+•	Introduce the chemistry-adapted F.O.P.S strategy:
+o	F – Find the core chemical principle (e.g., conservation of mass, acid-base neutralization)
+o	O – Organize known and unknown quantities using tables, equations, or visual models
+o	P – Plan your approach (which law or formula applies? what conversions are needed?)
+o	S – Solve the problem, explaining and checking each step
+🔁 Transfer Tasks for Developing Core Competencies (Chemistry Version)
+To help students strengthen their analogical reasoning and abstract transfer skills, provide two types of follow-up problems after the main chemistry problem is taught:
+________________________________________
+📌 Near-Transfer Problem (Same structure, different content)
+•	Create a problem that retains the same underlying chemical structure or reasoning pattern, but changes the context, substances, or numerical values slightly.
+•	Example:
+“A reaction produces 12.0 g of a compound when 3.0 g of reactant A is used, and the mass ratio between product and reactant is 4:1. How much product will form from 7.5 g of A?”
+•	This type of problem mirrors the same stoichiometric or proportional logic as the main problem, but offers a different surface situation.
+•	Students must recognize and apply the same modeling strategy in a new but structurally similar context.
+________________________________________
+📌 Far-Transfer Problem (Different surface features, same underlying structure)
+•	Design a problem that looks and feels completely different from the original, but shares the same core modeling structure or quantitative reasoning framework.
+•	Example:
+“A gas occupies 10.0 L at 2.0 atm. What was its original volume if it was compressed to 4.0 atm, assuming temperature and amount of gas remain constant?”
+•	While the content shifts from reaction stoichiometry to gas laws, the student must still apply an inverse relationship model (Boyle’s Law: P₁V₁ = P₂V₂), structurally similar to mass ratios or proportional models in chemical reactions.
+•	This tests whether students can abstract the underlying principles and apply them in novel chemical scenarios.
+Learning Approach & Cognitive Support Strategies (Chemistry Version)
+________________________________________
+🔧 Scaffolded Practice:
+•	Begin with teacher-guided, joint problem-solving using real chemical scenarios (e.g., stoichiometry, equilibrium, titration).
+•	Gradually shift responsibility to the student by providing interactive scaffolded tasks, such as:
+o	Partially completed chemical equations or reaction tables
+o	Selecting the correct next step in a procedure (e.g., “What’s the limiting reactant?”)
+o	Evaluating the relevance of given experimental data or lab conditions
+________________________________________
+🧠 Metacognitive Strategies for Chemistry Learners:
+•	Encourage students to develop self-instruction and self-monitoring habits, especially when analyzing experimental setups, applying formulas, or checking units and results.
+Example self-instruction prompts:
+•	“Do I understand what this reaction or system is about?”
+•	“What is the goal of this question—mass? volume? concentration?”
+•	“Which chemical principle applies here—conservation of mass, equilibrium, redox?”
+Self-monitoring tools:
+•	Reaction-solving checklists (e.g., “Is the equation balanced?” “Have I used correct mole ratios?”)
+•	Common error spot-checks (e.g., unit conversions, wrong molar masses)
+•	Final answer plausibility checks (e.g., “Does the pH value make sense?” “Is the yield realistic?”)
+________________________________________
+🗣 Teacher Modeling via Think Aloud:
+•	Teachers should model these cognitive strategies explicitly during instruction:
+o	Verbally walk through analyzing a reaction setup
+o	Pause to ask themselves clarifying questions
+o	Demonstrate how to check for consistency and reasonableness in a final answer

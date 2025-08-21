@@ -1,0 +1,21 @@
+# V0 自动化工具包 Python 依赖
+
+# 核心依赖
+requests>=2.31.0
+pathlib
+argparse
+json
+re
+subprocess
+time
+os
+sys
+
+# 可选依赖（用于增强功能）
+python-dotenv>=1.0.0  # 环境变量管理
+rich>=13.0.0          # 美化终端输出
+click>=8.1.0          # 命令行界面增强
+
+# 开发依赖（可选）
+pytest>=7.4.0        # 单元测试
+black>=23.0.0         # 代码格式化
