@@ -2,8 +2,6 @@
 
 # 核心依赖
 requests>=2.31.0
-pathlib
-argparse
 
 # 可选依赖（用于增强功能）
 python-dotenv>=1.0.0  # 环境变量管理

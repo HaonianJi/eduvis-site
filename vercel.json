@@ -1,13 +1,24 @@
 {
+  "functions": {
+    "api/v0-python-pipeline.py": {
+      "runtime": "vercel-python@3.0.0",
+      "memory": 1024
+    }
+  },
   "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next",
-      "config": { "includeFiles": ["v0_automation_toolkit/**"] }
-    },
     {
       "src": "v0_automation_toolkit/requirements.txt",
       "use": "@vercel/python"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/next",
+      "config": {
+        "includeFiles": [
+          "api/v0-python-pipeline.py",
+          "v0_automation_toolkit/**"
+        ]
+      }
     }
   ]
 }

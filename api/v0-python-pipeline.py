@@ -4,11 +4,8 @@ import os
 import sys
 from urllib.parse import parse_qs
 
-# Add the toolkit to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../v0_automation_toolkit')))
-
-# Now we can import from the toolkit
-from v0_api_integration import run_pipeline_from_prompt
+# Import directly from the toolkit package
+from v0_automation_toolkit.v0_api_integration import run_pipeline_from_prompt
 
 class handler(BaseHTTPRequestHandler):
 
