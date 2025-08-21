@@ -80,16 +80,22 @@ async function runV0AutomationPipeline(prompt: string, apiKey: string) {
     console.log("🚀 Calling Vercel Python function...")
     
     // Call the Vercel Python function
-    const response = await fetch('/api/v0-python-pipeline', {
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : '')
+    
+    const response = await fetch(`${baseUrl}/api/v0-python-pipeline`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey.trim()}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ 
         prompt: prompt 
       })
     })
+    
+    // Set API key as environment variable for the Python function
+    process.env.V0_API_KEY = apiKey.trim()
 
     if (!response.ok) {
       const errorText = await response.text()

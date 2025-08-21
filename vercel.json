@@ -7,12 +7,5 @@
       "runtime": "python3.9",
       "maxDuration": 25
     }
-  },
-  "buildCommand": "pnpm run build",
-  "outputDirectory": ".next",
-  "framework": "nextjs",
-  "installCommand": "pnpm install",
-  "env": {
-    "V0_API_KEY": "@v0_api_key"
   }
 }
