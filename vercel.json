@@ -1,0 +1,13 @@
+{
+  "builds": [
+    {
+      "src": "v0_automation_toolkit/requirements.txt",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": { "includeFiles": ["v0_automation_toolkit/**"] }
+    }
+  ]
+}
