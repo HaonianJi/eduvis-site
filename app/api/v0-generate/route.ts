@@ -89,7 +89,7 @@ async function runV0AutomationPipeline(prompt: string, apiKey: string) {
     env.V0_API_KEY = apiKey.trim()
 
     // Run the Python pipeline
-    const pythonProcess = spawn("python3", [scriptPath], {
+        const pythonProcess = spawn("python", [scriptPath], {
       cwd: toolkitPath,
       env: env,
       stdio: ['pipe', 'pipe', 'pipe']
