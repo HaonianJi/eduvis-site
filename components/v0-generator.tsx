@@ -157,7 +157,7 @@ export default function EducationalContentGenerator() {
     try {
       // Try to call the API if API key is provided
       if (apiKey.trim()) {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://your-server.com/api/v0-generate";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v0-generate';
         const response = await fetch(apiUrl, {
           method: "POST",
           headers: {

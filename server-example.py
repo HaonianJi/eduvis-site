@@ -20,7 +20,7 @@ import time
 from pathlib import Path
 
 app = Flask(__name__)
-CORS(app, origins=["*"])  # 生产环境中应限制到具体域名
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True) # 允许所有来源访问API，并支持凭证
 
 # 配置路径
 TOOLKIT_DIR = Path("v0_automation_toolkit")
