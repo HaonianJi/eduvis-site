@@ -25,7 +25,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# Generated projects
-v0_automation_toolkit/generated_projects/
-v0_automation_toolkit/responses/

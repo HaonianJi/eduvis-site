@@ -19,13 +19,12 @@ export async function POST(request: NextRequest) {
     // Call our powerful automation pipeline
     const result = await runV0AutomationPipeline(prompt, apiKey)
     
-        if (result.success && result.files) {
-      // The pipeline now returns file content directly
+    if (result.success) {
       return NextResponse.json({
         success: true,
         files: result.files,
-        projectPath: result.projectPath,
-        message: result.message
+        message: result.message,
+        note: result.note
       })
     } else {
       // Fallback to enhanced mock if pipeline fails
@@ -67,38 +66,64 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function runV0AutomationPipeline(prompt: string, apiKey: string): Promise<{success: boolean, files?: any[], projectPath?: string, message?: string, error?: string}> {
-  // In a serverless architecture, we call our Python endpoint via HTTP
-  const pythonApiUrl = `${process.env.VERCEL_URL ? 'https' : 'http'}://${process.env.VERCEL_URL || 'localhost:3000'}/api/v0-python-pipeline`;
-
-  console.log(`📞 Calling Python pipeline at: ${pythonApiUrl}`);
-
+async function runV0AutomationPipeline(prompt: string, apiKey: string) {
   try {
-    const response = await fetch(pythonApiUrl, {
+    // Validate API key
+    if (!apiKey || apiKey.trim() === "") {
+      console.warn("⚠️ No API key provided")
+      return {
+        success: false,
+        error: "API key is required for v0 project generation"
+      }
+    }
+
+    console.log("🚀 Calling Vercel Python function...")
+    
+    // Call the Vercel Python function
+    const response = await fetch('/api/v0-python-pipeline', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${apiKey.trim()}`
       },
-      body: JSON.stringify({ prompt }),
-    });
+      body: JSON.stringify({ 
+        prompt: prompt 
+      })
+    })
 
     if (!response.ok) {
-      const errorBody = await response.json();
-      const errorMessage = errorBody.error || `Python API failed with status ${response.status}`;
-      console.error('🔥 Python pipeline error:', errorMessage);
-      return { success: false, error: errorMessage };
+      const errorText = await response.text()
+      console.error(`Python function failed: ${response.status} ${errorText}`)
+      return {
+        success: false,
+        error: `Generation failed: ${response.status} ${errorText}`
+      }
     }
 
-    const result = await response.json();
-    return result; // The Python function now returns the file structure
+    const result = await response.json()
+    
+    if (result.success) {
+      // For Vercel deployment, we return the generated files instead of a running server
+      return {
+        success: true,
+        files: result.files,
+        message: result.message || "Project files generated successfully",
+        note: "Files generated for static hosting"
+      }
+    } else {
+      return {
+        success: false,
+        error: result.error || "Generation failed"
+      }
+    }
 
   } catch (error) {
-    console.error('🔥 Failed to fetch from Python pipeline:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error during fetch';
-    return { success: false, error: `Network error or failed to connect to Python pipeline: ${errorMessage}` };
+    console.error("Pipeline error:", error)
+    return {
+      success: false,
+      error: `Pipeline execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    }
   }
-
 }
 
 function generateEnhancedMockVisualization(prompt: string): string {

@@ -8,13 +8,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Play, Download, Eye, Code, Settings, AlertCircle, FileText, Folder, FileCode } from "lucide-react"
+import { Loader2, Play, Download, Eye, Code, Settings, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-
-interface FileType {
-  path: string;
-  content: string;
-}
 
 interface V0Response {
   success?: boolean
@@ -25,7 +20,11 @@ interface V0Response {
   preview_url?: string
   error?: string
   fallback?: boolean
-  files?: FileType[]
+  note?: string
+  files?: Array<{
+    path: string
+    content: string
+  }>
 }
 
 interface LoadingStage {
@@ -89,7 +88,6 @@ export default function V0Generator() {
   const [result, setResult] = useState<V0Response | null>(null)
   const [error, setError] = useState("")
   const [previewMode, setPreviewMode] = useState<"iframe" | "code">("iframe")
-  const [selectedFile, setSelectedFile] = useState<FileType | null>(null);
 
   // Save API key to localStorage
   const saveApiKey = () => {
@@ -177,18 +175,26 @@ export default function V0Generator() {
         if (response.ok) {
           const data = await response.json()
           
-          if (data.success && data.files && data.files.length > 0) {
-            // Success: Real v0 project with files generated
-            setResult({
-              success: true,
-              files: data.files,
-              projectPath: data.projectPath,
-              message: data.message
-            });
-            // Automatically select a primary file to view
-            const primaryFile = data.files.find((f: FileType) => f.path.endsWith('app/page.tsx')) || data.files.find((f: FileType) => f.path.endsWith('index.html')) || data.files[0];
-            setSelectedFile(primaryFile);
-            return;
+          if (data.success && (data.projectUrl || data.files)) {
+            // Real v0 generation successful
+            if (data.projectUrl) {
+              // Traditional server-based response
+              setResult({
+                success: true,
+                projectUrl: data.projectUrl,
+                projectPath: data.projectPath,
+                message: data.message
+              })
+            } else if (data.files) {
+              // New file-based response for Vercel
+              setResult({
+                success: true,
+                files: data.files,
+                message: data.message,
+                note: data.note
+              })
+            }
+            return
           } else if (data.fallback && data.code) {
             // Fallback: Enhanced mock provided
             setResult({
@@ -693,56 +699,62 @@ export default function V0Generator() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               {result.success ? "🎉 V0 Project Generated Successfully!" : "📱 Enhanced Educational Visualization"}
+              <div className="flex gap-2">
+                {result.success ? (
+                  <Button asChild size="sm" className="bg-green-600 hover:bg-green-700">
+                    <a href={result.projectUrl} target="_blank" rel="noopener noreferrer">
+                      <Eye className="mr-2 h-4 w-4" />
+                      Open Project
+                    </a>
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPreviewMode(previewMode === "iframe" ? "code" : "iframe")}
+                    >
+                      {previewMode === "iframe" ? (
+                        <>
+                          <Code className="mr-2 h-4 w-4" />
+                          View Code
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Preview
+                        </>
+                      )}
+                    </Button>
+                    <Button onClick={downloadCode} size="sm">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download HTML
+                    </Button>
+                  </>
+                )}
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {result.success && result.files ? (
-              // Success: Display file tree and code viewer
-              <div className="flex gap-4 h-[700px]">
-                {/* File Tree */}
-                <div className="w-1/3 border rounded-lg p-2 overflow-y-auto">
-                  <h3 className="font-semibold mb-2 flex items-center gap-2"><Folder size={16} /> Project Files</h3>
-                  <div className="space-y-1">
-                    {result.files.map((file: FileType) => (
-                      <Button
-                        key={file.path}
-                        variant={selectedFile?.path === file.path ? "secondary" : "ghost"}
-                        className="w-full justify-start text-left h-auto py-1 px-2"
-                        onClick={() => setSelectedFile(file)}
-                      >
-                        <FileCode size={14} className="mr-2 flex-shrink-0" />
-                        <span className="truncate text-xs">{file.path}</span>
-                      </Button>
-                    ))}
-                  </div>
+            {result.success && result.projectUrl ? (
+              // Success: Display project information
+              <div className="space-y-4">
+                <Alert className="border-green-200 bg-green-50">
+                  <AlertCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    <strong>{result.message}</strong>
+                  </AlertDescription>
+                </Alert>
+                <div className="border rounded-lg overflow-hidden">
+                  <iframe
+                    src={result.projectUrl}
+                    className="w-full h-[700px]"
+                    title="Generated V0 Educational Project"
+                  />
                 </div>
-
-                {/* Code Viewer */}
-                <div className="w-2/3 border rounded-lg relative">
-                  {selectedFile ? (
-                    <>
-                      <div className="p-2 border-b bg-muted/50 text-sm font-mono flex items-center justify-between">
-                        <span className="truncate">{selectedFile.path}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            navigator.clipboard.writeText(selectedFile.content)
-                            alert("Code copied to clipboard!")
-                          }}
-                        >
-                          Copy
-                        </Button>
-                      </div>
-                      <pre className="p-4 text-sm overflow-auto h-[calc(100%-41px)]">
-                        <code>{selectedFile.content}</code>
-                      </pre>
-                    </>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      <p>Select a file to view its content</p>
-                    </div>
-                  )}
+                <div className="text-sm text-muted-foreground">
+                  <p><strong>Project URL:</strong> <code>{result.projectUrl}</code></p>
+                  <p><strong>Status:</strong> {result.projectPath}</p>
                 </div>
               </div>
             ) : (
