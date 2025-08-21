@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "api/v0-python-pipeline.py": {
+      "runtime": "vercel-python@3.0.0",
+      "memory": 2048,
+      "maxDuration": 60
+    }
+  }
+}
