@@ -18,9 +18,22 @@ yarn-error.log*
 
 # env files
 .env*
+!env.example
 
 # vercel
 .vercel
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+v0_automation_toolkit/generated_projects/
+v0_automation_toolkit/responses/
+*.log
+
+# OS
+.DS_Store
+.DS_Store?
 
 # typescript
 *.tsbuildinfo

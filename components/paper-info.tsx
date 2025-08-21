@@ -1,9 +1,13 @@
+"use client"
+
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ExternalLink, Calendar, Users, BookOpen } from "lucide-react"
+import { useState } from "react"
 
 export default function PaperInfo() {
+  const [showFullAbstract, setShowFullAbstract] = useState(false)
   const paperData = {
     title:
       "From EduVisBench to EduVisAgent: A Benchmark and Multi-Agent Framework for Reasoning-Driven Pedagogical Visualization",
@@ -103,17 +107,20 @@ export default function PaperInfo() {
             </Button>
           </div>
 
-          {/* Abstract Preview */}
+          {/* Abstract */}
           <div className="border-t pt-4">
             <h3 className="text-sm font-medium mb-2">Abstract</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {paperData.abstract.length > 300 ? `${paperData.abstract.substring(0, 300)}...` : paperData.abstract}
+              {showFullAbstract ? paperData.abstract : `${paperData.abstract.substring(0, 300)}...`}
             </p>
-            {paperData.abstract.length > 300 && (
-              <Button variant="link" size="sm" className="p-0 h-auto mt-1">
-                Read full abstract
-              </Button>
-            )}
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="p-0 h-auto mt-1"
+              onClick={() => setShowFullAbstract(!showFullAbstract)}
+            >
+              {showFullAbstract ? 'Show less' : 'Read full abstract'}
+            </Button>
           </div>
         </div>
       </CardContent>

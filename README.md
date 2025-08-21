@@ -1,56 +1,98 @@
 # EduVis Site
 
-An educational visualization platform with integrated v0 AI project generation.
+一个基于AI的教育内容可视化平台，帮助创建交互式教育内容和可视化材料。
 
-## Features
+## ✨ 特性
 
-- 🎓 Interactive educational content
-- 🤖 AI-powered project generation using v0 API
-- 📊 Dynamic visualizations and simulations
-- 🎨 Modern UI with shadcn/ui components
+- 🎓 **教育内容展示**: 展示EduVis研究项目和成果
+- 🎬 **媒体演示**: 包含视频演示和交互式内容
+- 🤖 **AI内容生成**: 通过AI自动生成教育可视化工具
+- 📱 **响应式设计**: 支持多种设备和屏幕尺寸
+- 🚀 **现代技术栈**: Next.js 15 + TypeScript + Tailwind CSS
 
-## Quick Start
+## 🏗️ 架构
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+- **前端**: Next.js 静态网站，部署在 GitHub Pages
+- **后端**: Python API 服务，运行在独立服务器上
+- **集成**: 前后端分离架构，支持跨域API调用
 
-2. **Set environment variables:**
-   Create `.env.local` with:
-   ```
-   V0_API_KEY=your_v0_api_key_here
-   ```
+## 🚀 快速开始
 
-3. **Run development server:**
-   ```bash
-   npm run dev
-   ```
+### 本地开发
 
-4. **Build for production:**
-   ```bash
-   npm run build
-   ```
+```bash
+# 安装依赖
+pnpm install
 
-## Deployment
+# 启动开发服务器
+pnpm dev
 
-### Vercel Deployment
+# 打开浏览器访问 http://localhost:3000
+```
 
-1. Connect your GitHub repository to Vercel
-2. Set the `V0_API_KEY` environment variable in Vercel project settings
-3. Deploy
+### 配置API服务
 
-The project is configured for Vercel with:
-- Next.js 15.2.4 App Router
-- API routes with 30s timeout for v0 generation
-- Optimized for serverless functions
+如需启用内容生成功能，请：
 
-## Architecture
+1. 复制环境配置文件：
+```bash
+cp local-config.env .env.local
+```
 
-- **Frontend:** Next.js with React 19, Tailwind CSS, shadcn/ui
-- **API:** Next.js API routes for v0 integration
-- **Deployment:** Vercel serverless functions
+2. 修改 `.env.local` 中的API地址：
+```bash
+NEXT_PUBLIC_API_URL=http://your-server.com/api/v0-generate
+```
 
-## Environment Variables
+### 构建部署
 
-- `V0_API_KEY` - Required for v0 API access
+```bash
+# 构建静态文件
+pnpm run build
+
+# 生成的文件在 out/ 目录
+```
+
+## 📦 部署
+
+### GitHub Pages 部署
+
+1. 推送代码到 GitHub 仓库
+2. 在仓库设置中启用 GitHub Pages
+3. 设置 Actions secrets:
+   - `API_URL`: 您的API服务器地址
+4. 推送到 main 分支自动触发部署
+
+### API 服务器部署
+
+参考 `server-example.py` 和 `DEPLOYMENT.md` 文档。
+
+## 🛠️ 技术栈
+
+- **框架**: Next.js 15
+- **语言**: TypeScript
+- **样式**: Tailwind CSS
+- **UI组件**: shadcn/ui
+- **图标**: Lucide React
+- **后端**: Python + Flask
+- **部署**: GitHub Pages + 自定义服务器
+
+## 📄 项目结构
+
+```
+eduvis-site/
+├── app/                    # Next.js App Router 页面
+├── components/             # React 组件
+├── lib/                    # 工具函数
+├── v0_automation_toolkit/  # Python AI 生成工具
+├── public/                 # 静态资源
+└── out/                    # 构建输出
+```
+
+## 🤝 贡献
+
+欢迎贡献代码和建议！请查看我们的贡献指南。
+
+## 📝 许可证
+
+本项目采用 MIT 许可证。

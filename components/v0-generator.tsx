@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Loader2, Play, Download, Eye, Code, Settings, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-interface V0Response {
+interface ApiResponse {
   success?: boolean
   projectUrl?: string
   projectPath?: string
@@ -20,7 +20,6 @@ interface V0Response {
   preview_url?: string
   error?: string
   fallback?: boolean
-  note?: string
   files?: Array<{
     path: string
     content: string
@@ -38,8 +37,8 @@ interface LoadingStage {
 const loadingStages: LoadingStage[] = [
   {
     id: "api-call",
-    title: "🌐 调用 v0 API",
-    description: "正在将您的问题发送到 v0 AI 系统...",
+    title: "🌐 调用 API",
+    description: "正在将您的问题发送到 AI 系统...",
     duration: 8
   },
   {
@@ -79,27 +78,27 @@ const loadingStages: LoadingStage[] = [
   }
 ]
 
-export default function V0Generator() {
+export default function EducationalContentGenerator() {
   const [apiKey, setApiKey] = useState("")
   const [prompt, setPrompt] = useState("")
   const [loading, setLoading] = useState(false)
   const [loadingStage, setLoadingStage] = useState(0)
   const [currentFiles, setCurrentFiles] = useState<string[]>([])
-  const [result, setResult] = useState<V0Response | null>(null)
+  const [result, setResult] = useState<ApiResponse | null>(null)
   const [error, setError] = useState("")
   const [previewMode, setPreviewMode] = useState<"iframe" | "code">("iframe")
 
   // Save API key to localStorage
   const saveApiKey = () => {
     if (apiKey.trim()) {
-      localStorage.setItem("v0_api_key", apiKey)
+      localStorage.setItem("api_key", apiKey)
       alert("API Key saved locally!")
     }
   }
 
   // Load API key from localStorage
   const loadApiKey = () => {
-    const saved = localStorage.getItem("v0_api_key")
+    const saved = localStorage.getItem("api_key")
     if (saved) {
       setApiKey(saved)
     }
@@ -141,7 +140,7 @@ export default function V0Generator() {
     processStage(0)
   }
 
-  // Generate visualization using V0 API
+  // Generate visualization using API
   const generateVisualization = async () => {
     if (!prompt.trim()) {
       setError("Please provide a problem description")
@@ -158,7 +157,8 @@ export default function V0Generator() {
     try {
       // Try to call the API if API key is provided
       if (apiKey.trim()) {
-        const response = await fetch("/api/v0-generate", {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://your-server.com/api/v0-generate";
+        const response = await fetch(apiUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -175,25 +175,14 @@ export default function V0Generator() {
         if (response.ok) {
           const data = await response.json()
           
-          if (data.success && (data.projectUrl || data.files)) {
-            // Real v0 generation successful
-            if (data.projectUrl) {
-              // Traditional server-based response
-              setResult({
-                success: true,
-                projectUrl: data.projectUrl,
-                projectPath: data.projectPath,
-                message: data.message
-              })
-            } else if (data.files) {
-              // New file-based response for Vercel
-              setResult({
-                success: true,
-                files: data.files,
-                message: data.message,
-                note: data.note
-              })
-            }
+          if (data.success && data.projectUrl) {
+            // Success: Real v0 project generated
+            setResult({
+              success: true,
+              projectUrl: data.projectUrl,
+              projectPath: data.projectPath,
+              message: data.message
+            })
             return
           } else if (data.fallback && data.code) {
             // Fallback: Enhanced mock provided
@@ -459,7 +448,7 @@ export default function V0Generator() {
       <Alert className="border-blue-200 bg-blue-50">
         <AlertCircle className="h-4 w-4 text-blue-600" />
         <AlertDescription className="text-blue-800">
-          <strong>🚀 Powered by V0 Automation Pipeline:</strong> This playground now generates complete Next.js projects with real AI-powered educational content. With an API key, you'll get fully interactive applications. Without one, you'll still receive enhanced visualizations that adapt intelligently to your problem type.
+          <strong>🚀 Powered by Automation Pipeline:</strong> This playground now generates complete Next.js projects with real AI-powered educational content. With an API key, you'll get fully interactive applications. Without one, you'll still receive enhanced visualizations that adapt intelligently to your problem type.
         </AlertDescription>
       </Alert>
 
@@ -468,17 +457,17 @@ export default function V0Generator() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            V0 API Configuration (Optional)
+            API Configuration (Optional)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="api-key">V0 API Key (Optional for Demo)</Label>
+            <Label htmlFor="api-key">API Key (Optional for Demo)</Label>
             <div className="flex gap-2">
               <Input
                 id="api-key"
                 type="password"
-                placeholder="Enter your V0 API key (optional)"
+                placeholder="Enter your API key (optional)"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 className="flex-1"
@@ -698,7 +687,7 @@ export default function V0Generator() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              {result.success ? "🎉 V0 Project Generated Successfully!" : "📱 Enhanced Educational Visualization"}
+              {result.success ? "🎉 Project Generated Successfully!" : "📱 Enhanced Educational Visualization"}
               <div className="flex gap-2">
                 {result.success ? (
                   <Button asChild size="sm" className="bg-green-600 hover:bg-green-700">
@@ -749,7 +738,7 @@ export default function V0Generator() {
                   <iframe
                     src={result.projectUrl}
                     className="w-full h-[700px]"
-                    title="Generated V0 Educational Project"
+                    title="Generated Educational Project"
                   />
                 </div>
                 <div className="text-sm text-muted-foreground">

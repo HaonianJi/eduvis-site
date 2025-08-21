@@ -141,137 +141,32 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Quick links editor */}
+        {/* About section */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
-          <Tabs defaultValue="about" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 sm:w-auto bg-white border border-gray-200 shadow-sm">
-              <TabsTrigger value="about" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
-                About
-              </TabsTrigger>
-              <TabsTrigger value="links" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
-                Links
-              </TabsTrigger>
-              <TabsTrigger
-                value="abstract"
-                className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-              >
-                Abstract
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="about" className="mt-8">
-              <div className="space-y-8">
-                <PaperInfo />
-                <div className="grid gap-8 md:grid-cols-2">
-                  <Card className="border-0 shadow-sm bg-white">
-                    <CardContent className="p-8">
-                      <h3 className="text-xl font-semibold text-gray-900">What is EduVisBench?</h3>
-                      <p className="mt-4 text-gray-600 leading-relaxed">
-                        EduVisBench is a multi-domain, multi-level benchmark for evaluating the capacity of foundation
-                        models to generate pedagogically effective, step-by-step visual reasoning across STEM scenarios.
-                        It emphasizes interpretability, cognitive alignment, and instructional clarity.
-                      </p>
-                      <Separator className="my-6" />
-                      <h3 className="text-xl font-semibold text-gray-900">What is EduVisAgent?</h3>
-                      <p className="mt-4 text-gray-600 leading-relaxed">
-                        EduVisAgent is a multi-agent framework coordinating specialized agents for instructional
-                        planning, reasoning decomposition, metacognitive prompting, and visualization design to produce
-                        interactive, learning-aligned visual explanations.
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Stats />
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="links" className="mt-8">
+          <div className="space-y-8">
+            <PaperInfo />
+            <div className="grid gap-8 md:grid-cols-2">
               <Card className="border-0 shadow-sm bg-white">
                 <CardContent className="p-8">
-                  <h3 className="text-xl font-semibold text-gray-900">Customize Links</h3>
-                  <p className="mt-4 text-gray-600">
-                    Paste your Paper PDF URL and repository links. They are saved in your browser only.
+                  <h3 className="text-xl font-semibold text-gray-900">What is EduVisBench?</h3>
+                  <p className="mt-4 text-gray-600 leading-relaxed">
+                    EduVisBench is a multi-domain, multi-level benchmark for evaluating the capacity of foundation
+                    models to generate pedagogically effective, step-by-step visual reasoning across STEM scenarios.
+                    It emphasizes interpretability, cognitive alignment, and instructional clarity.
                   </p>
-                  <div className="mt-6 grid gap-4">
-                    <div className="grid gap-2">
-                      <label htmlFor="paperUrl" className="text-sm font-medium text-gray-700">
-                        Paper URL (PDF)
-                      </label>
-                      <input
-                        id="paperUrl"
-                        value={paperUrl}
-                        onChange={(e) => setPaperUrl(e.target.value)}
-                        placeholder="https://example.com/paper.pdf"
-                        className="h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-colors"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <label htmlFor="codeUrl" className="text-sm font-medium text-gray-700">
-                        Code Repository
-                      </label>
-                      <input
-                        id="codeUrl"
-                        value={codeUrl}
-                        onChange={(e) => setCodeUrl(e.target.value)}
-                        placeholder="https://github.com/your/repo"
-                        className="h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-colors"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <label htmlFor="benchUrl" className="text-sm font-medium text-gray-700">
-                        Benchmark/Data
-                      </label>
-                      <input
-                        id="benchUrl"
-                        value={benchUrl}
-                        onChange={(e) => setBenchUrl(e.target.value)}
-                        placeholder="https://github.com/your/benchmark"
-                        className="h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-colors"
-                      />
-                    </div>
-                    <div className="flex gap-3 mt-4">
-                      <Button onClick={saveLinks} className="bg-blue-600 hover:bg-blue-700">
-                        Save Changes
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setPaperUrl("")
-                          localStorage.removeItem("paperUrl")
-                        }}
-                        className="border-gray-300 hover:bg-gray-50"
-                      >
-                        Clear Paper URL
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="abstract" className="mt-8">
-              <Card className="border-0 shadow-sm bg-white">
-                <CardContent className="p-8">
-                  <h3 className="text-xl font-semibold text-gray-900">Abstract</h3>
-                  <p className="mt-4 text-gray-600 leading-relaxed text-left">
-                    While foundation models (FMs), such as diffusion models and large vision-language models (LVLMs),
-                    have been widely applied in educational contexts, their ability to generate pedagogically effective
-                    visual explanations remains limited. Most existing approaches focus primarily on textual reasoning,
-                    overlooking the critical role of structured and interpretable visualizations in supporting
-                    conceptual understanding. To better assess the visual reasoning capabilities of FMs in educational
-                    settings, we introduce EduVisBench, a multi-domain, multi-level benchmark. Our analysis reveals
-                    recurring challenges in decomposing complex reasoning and translating it into visual representations
-                    aligned with human cognitive processes. To address these limitations, we propose EduVisAgent, a
-                    multi-agent collaborative framework coordinating specialized agents for instructional planning,
-                    reasoning decomposition, metacognitive prompting, and visualization design. Experimental results
-                    show EduVisAgent substantially outperforms baselines, achieving a 40.2% improvement and delivering
-                    more educationally aligned visualizations.
+                  <Separator className="my-6" />
+                  <h3 className="text-xl font-semibold text-gray-900">What is EduVisAgent?</h3>
+                  <p className="mt-4 text-gray-600 leading-relaxed">
+                    EduVisAgent is a multi-agent framework coordinating specialized agents for instructional
+                    planning, reasoning decomposition, metacognitive prompting, and visualization design to produce
+                    interactive, learning-aligned visual explanations.
                   </p>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+
+              <Stats />
+            </div>
+          </div>
         </section>
 
         {/* Results */}

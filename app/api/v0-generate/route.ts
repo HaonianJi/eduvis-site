@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
     if (result.success) {
       return NextResponse.json({
         success: true,
-        files: result.files,
-        message: result.message,
-        note: result.note
+        projectUrl: result.projectUrl,
+        projectPath: result.projectPath,
+        message: result.message
       })
     } else {
       // Fallback to enhanced mock if pipeline fails
@@ -67,163 +67,136 @@ export async function POST(request: NextRequest) {
 }
 
 async function runV0AutomationPipeline(prompt: string, apiKey: string) {
-  try {
+  return new Promise<{success: boolean, projectUrl?: string, projectPath?: string, message?: string, error?: string}>((resolve) => {
+    const toolkitPath = path.join(process.cwd(), "v0_automation_toolkit")
+    const scriptPath = path.join(toolkitPath, "v0_api_integration.py")
+    
+    console.log(`📁 Toolkit path: ${toolkitPath}`)
+    console.log(`🐍 Script path: ${scriptPath}`)
+
     // Validate API key
     if (!apiKey || apiKey.trim() === "") {
-      console.warn("⚠️ No API key provided")
-      return {
+      console.warn("⚠️ No API key provided, pipeline will fail")
+      resolve({
         success: false,
         error: "API key is required for v0 project generation"
-      }
+      })
+      return
     }
 
-    console.log("🚀 Calling v0 API directly...")
-    
-    // Call v0 API directly from Next.js
-    const v0Response = await callV0Api(prompt, apiKey.trim())
-    
-    if (!v0Response.success) {
-      return {
-        success: false,
-        error: v0Response.error || "Failed to generate project"
-      }
-    }
+    // Prepare environment variables
+    const env = { ...process.env }
+    env.V0_API_KEY = apiKey.trim()
 
-    // Extract files from response
-    const files = extractFilesFromResponse(v0Response.data || '')
-    
-    if (!files || files.length === 0) {
-      return {
-        success: false,
-        error: "No files generated from v0 response"
-      }
-    }
-
-    return {
-      success: true,
-      files: files,
-      message: "Project files generated successfully",
-      note: "Files generated for Vercel deployment"
-    }
-
-  } catch (error) {
-    console.error("Pipeline error:", error)
-    return {
-      success: false,
-      error: `Pipeline execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    }
-  }
-}
-
-async function callV0Api(prompt: string, apiKey: string) {
-  try {
-    const url = "https://api.v0.dev/chat"
-    const headers = {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    }
-    
-    const payload = {
-      "model": "v0",
-      "messages": [
-        {
-          "role": "user", 
-          "content": prompt
-        }
-      ]
-    }
-    
-    console.log(`🚀 Calling v0 API with prompt: ${prompt.substring(0, 100)}...`)
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: headers, 
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(20000) // 20 second timeout
+    // Run the Python pipeline
+    const pythonProcess = spawn("python3", [scriptPath], {
+      cwd: toolkitPath,
+      env: env,
+      stdio: ['pipe', 'pipe', 'pipe']
     })
-    
-    if (response.status === 401) {
-      return { success: false, error: 'Invalid or expired API key' }
-    } else if (!response.ok) {
-      return { success: false, error: `v0 API error: ${response.status} ${response.statusText}` }
-    }
-    
-    const result = await response.json()
-    
-    // Extract the generated content
-    if (result.choices && result.choices.length > 0) {
-      const content = result.choices[0]?.message?.content || ''
-      return { success: true, data: content }
-    } else {
-      return { success: false, error: 'No content in v0 API response' }
-    }
-        
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      return { success: false, error: 'v0 API request timed out' }
-    }
-    return { success: false, error: `v0 API call failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
-  }
-}
 
-function extractFilesFromResponse(content: string) {
-  const files: Array<{path: string, content: string}> = []
-  
-  try {
-    // Look for code blocks with file paths
-    const filePattern = /```(?:tsx?|jsx?|css|html|json)\s*(?:\/\/\s*(.+?)\n)?([\s\S]*?)```/g
-    let match
-    let fileIndex = 0
-    
-    while ((match = filePattern.exec(content)) !== null) {
-      let filename = match[1]?.trim()
-      const fileContent = match[2]?.trim()
+    let stdout = ""
+    let stderr = ""
+
+    // Send the prompt to the Python process
+    pythonProcess.stdin.write(prompt + "\n")
+    pythonProcess.stdin.end()
+
+    pythonProcess.stdout.on("data", (data) => {
+      const output = data.toString()
+      stdout += output
+      console.log("📝 Pipeline stdout:", output.trim())
+    })
+
+    pythonProcess.stderr.on("data", (data) => {
+      const error = data.toString()
+      stderr += error
+      console.log("📝 Pipeline stderr:", error.trim()) // Changed from error to log
+    })
+
+    pythonProcess.on("close", (code) => {
+      console.log(`🏁 Pipeline finished with code: ${code}`)
       
-      if (!filename) {
-        // Generate default filename based on content
-        if (fileContent.includes('export default') && fileContent.includes('tsx')) {
-          filename = `component-${fileIndex}.tsx`
-        } else if (fileContent.includes('function') || fileContent.includes('const')) {
-          filename = `page-${fileIndex}.tsx`  
-        } else {
-          filename = `file-${fileIndex}.txt`
-        }
-      }
-      
-      if (fileContent) {
-        files.push({
-          path: filename,
-          content: fileContent
-        })
-        fileIndex++
-      }
-    }
-    
-    // If no files found with pattern, try to extract any code blocks
-    if (files.length === 0) {
-      const codeBlockPattern = /```\w*\n([\s\S]*?)\n```/g
-      let codeMatch
-      let codeIndex = 0
-      
-      while ((codeMatch = codeBlockPattern.exec(content)) !== null) {
-        const code = codeMatch[1]?.trim()
-        if (code) {
-          files.push({
-            path: `generated-${codeIndex}.tsx`,
-            content: code
+      if (code === 0) {
+        try {
+          // Try to parse JSON result from stdout
+          const lines = stdout.trim().split('\n')
+          const lastLine = lines[lines.length - 1]
+          
+          if (lastLine.startsWith('{')) {
+            const result = JSON.parse(lastLine)
+            if (result.success && result.projectUrl) {
+              resolve({
+                success: true,
+                projectUrl: result.projectUrl,
+                projectPath: result.projectPath,
+                message: result.message || `Successfully generated project at ${result.projectUrl}`
+              })
+              return
+            }
+          }
+          
+          // Fallback: extract URL from any line
+          const urlMatch = stdout.match(/http:\/\/localhost:(\d+)/)
+          if (urlMatch) {
+            const projectUrl = urlMatch[0]
+            const port = urlMatch[1]
+            
+            resolve({
+              success: true,
+              projectUrl: projectUrl,
+              projectPath: `Generated project running on port ${port}`,
+              message: `🎉 Successfully generated interactive educational project! Running at ${projectUrl}`
+            })
+          } else {
+            resolve({
+              success: false,
+              error: "Pipeline completed but no valid result found in output"
+            })
+          }
+        } catch (parseError) {
+          console.error("Failed to parse pipeline output:", parseError)
+          resolve({
+            success: false,
+            error: `Pipeline output parsing failed: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
           })
-          codeIndex++
         }
-      }
-    }
-    
-    console.log(`📁 Extracted ${files.length} files from v0 response`)
-    return files
+      } else {
+        // Check for specific error patterns
+        let errorMessage = `Pipeline failed with exit code ${code}`
         
-  } catch (error) {
-    console.error('Error extracting files:', error)
-    return []
-  }
+        if (stderr.includes('401 Unauthorized')) {
+          errorMessage = "Invalid or expired API key. Please check your v0 API key."
+        } else if (stderr.includes('SSL')) {
+          errorMessage = "Network connection issue. Please try again."
+        } else if (stderr.includes('Missing API key')) {
+          errorMessage = "API key is required for v0 project generation."
+        }
+        
+        resolve({
+          success: false,
+          error: errorMessage
+        })
+      }
+    })
+
+    pythonProcess.on("error", (error) => {
+      console.error("🔥 Process error:", error)
+      resolve({
+        success: false,
+        error: `Failed to start pipeline: ${error.message}`
+      })
+    })
+
+    // Set a timeout for the pipeline
+    setTimeout(() => {
+      pythonProcess.kill()
+      resolve({
+        success: false,
+        error: "Pipeline timed out after 6 minutes. The process may still be running in the background."
+      })
+    }, 360000) // 6 minutes timeout - allows for shadcn-ui component installation
+  })
 }
 
 function generateEnhancedMockVisualization(prompt: string): string {

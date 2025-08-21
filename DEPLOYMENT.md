@@ -1,140 +1,138 @@
-# EduVis Site - Vercel 部署指南
+# EduVis Site - GitHub Pages 部署指南
 
-## 概述
+## 部署架构
 
-本项目现已适配 Vercel 部署，支持完整的 v0 生成功能。与 GitHub Pages 静态部署不同，Vercel 支持无服务器函数，可以运行后端逻辑。
+本项目采用前后端分离的架构：
 
-## 项目适配修改
+### 前端 (GitHub Pages)
+- **EduVis 主站**: 静态网站，包含主页、About、媒体演示等
+- **部署平台**: GitHub Pages
+- **技术栈**: Next.js 静态导出
 
-### 1. Next.js 配置修改
-- 移除了 `output: 'export'` 静态导出配置
-- 移除了 `basePath` 和 `assetPrefix`，因为 Vercel 不需要这些配置
-
-### 2. API 架构调整
-- 创建了 `/api/v0-python-pipeline.py` 作为 Vercel Python 函数
-- 修改了 `/app/api/v0-generate/route.ts` 以调用 Python 函数而非本地脚本
-- 更新了前端组件以处理文件响应格式
-
-### 3. 新增配置文件
-- `vercel.json`: Vercel 部署配置
-- `api/requirements.txt`: Python 函数依赖
+### 后端 (您的服务器)
+- **内容生成服务**: Python API 服务，运行 v0_automation_toolkit
+- **部署平台**: 您的服务器
+- **技术栈**: Python + Flask/FastAPI
 
 ## 部署步骤
 
-### 第一步：推送代码到 GitHub
+### 1. GitHub Pages 部署
 
+#### 准备工作
+1. 将此项目推送到 GitHub 仓库
+2. 在 GitHub 仓库设置中配置 GitHub Pages
+3. 在仓库的 Settings > Secrets and variables > Actions 中添加环境变量：
+   ```
+   API_URL = https://your-server.com/api/v0-generate
+   ```
+
+#### 自动部署
+- 推送到 `main` 分支时会自动触发部署
+- GitHub Actions 会自动构建并部署到 GitHub Pages
+- 访问地址: `https://your-username.github.io/eduvis-site`
+
+### 2. 服务器后端部署
+
+#### 创建后端 API 服务
+在您的服务器上创建一个 Python API 服务：
+
+```python
+# server.py
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import subprocess
+import json
+import os
+
+app = Flask(__name__)
+CORS(app)  # 允许跨域请求
+
+@app.route('/api/v0-generate', methods=['POST'])
+def generate_content():
+    try:
+        data = request.json
+        prompt = data.get('prompt')
+        
+        # 调用 v0_automation_toolkit
+        result = subprocess.run([
+            'python', 'v0_api_integration.py'
+        ], input=json.dumps({"problem": prompt}), 
+           capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            response = json.loads(result.stdout)
+            return jsonify(response)
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Generation failed",
+                "fallback": True
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            "success": False, 
+            "error": str(e),
+            "fallback": True
+        }), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+```
+
+#### 部署后端服务
+1. 将 `v0_automation_toolkit` 目录上传到您的服务器
+2. 安装依赖: `pip install -r requirements.txt`
+3. 设置环境变量: `export V0_API_KEY=your_api_key`
+4. 运行服务: `python server.py`
+5. 配置反向代理 (Nginx) 以提供 HTTPS
+
+## 环境配置
+
+### 前端环境变量
+创建 `.env.local` 文件：
 ```bash
-git add .
-git commit -m "Adapt project for Vercel deployment"
-git push
+NEXT_PUBLIC_API_URL=https://your-server.com/api/v0-generate
 ```
 
-### 第二步：连接 Vercel
-
-1. 访问 [vercel.com](https://vercel.com) 并登录
-2. 点击 "New Project"
-3. 选择您的 GitHub 仓库 `eduvis-site`
-4. Vercel 会自动检测这是一个 Next.js 项目
-
-### 第三步：配置环境变量
-
-在 Vercel 项目设置中添加环境变量：
-- `V0_API_KEY`: 您的 v0 API 密钥
-
-设置步骤：
-1. 进入项目 Settings → Environment Variables
-2. 添加 `V0_API_KEY` 变量
-3. 将值设置为您的实际 API 密钥
-
-### 第四步：部署
-
-1. 点击 "Deploy" 按钮
-2. 等待构建完成（通常需要 1-3 分钟）
-3. 部署成功后，您将获得一个 `.vercel.app` 域名
-
-## 功能差异对比
-
-| 功能 | GitHub Pages | Vercel |
-|------|--------------|---------|
-| 静态页面 | ✅ | ✅ |
-| API 路由 | ❌ | ✅ |
-| v0 生成功能 | ❌ | ✅ |
-| Python 脚本 | ❌ | ✅ |
-| 自定义域名 | ✅ | ✅ |
-| 部署速度 | 快 | 快 |
-| 免费额度 | 无限 | 100GB/月 |
-
-## 技术架构
-
-### Vercel 无服务器架构
-
-```
-用户请求 → Next.js API 路由 → Python 函数 → v0 API → 返回生成文件
+### 后端环境变量
+```bash
+V0_API_KEY=your_v0_api_key
+PORT=5000
 ```
 
-### 与本地开发的区别
+## 本地开发
 
-- **本地**: 生成完整项目并启动开发服务器
-- **Vercel**: 直接返回生成的文件内容，适合静态展示
+### 启动前端
+```bash
+cd eduvis-site
+npm install
+npm run dev
+```
 
-## 环境变量配置
+### 启动后端
+```bash
+cd v0_automation_toolkit
+pip install -r requirements.txt
+export V0_API_KEY=your_key
+python server.py
+```
 
-### 必需环境变量
-- `V0_API_KEY`: v0 平台的 API 密钥
+## 新项目部署流程
 
-### 可选环境变量
-- `NODE_ENV`: 自动设置为 `production`
+当后端生成新的教育项目后，可以通过以下方式部署：
+
+1. **手动部署**: 将生成的项目推送到新的 GitHub 仓库并启用 GitHub Pages
+2. **自动部署**: 扩展后端服务，自动创建 GitHub 仓库并部署生成的项目
 
 ## 故障排除
 
 ### 常见问题
+1. **CORS 错误**: 确保后端服务配置了正确的 CORS 策略
+2. **API 调用失败**: 检查 `NEXT_PUBLIC_API_URL` 环境变量配置
+3. **构建失败**: 检查 Next.js 静态导出配置
 
-1. **Python 函数超时**
-   - Vercel 免费版限制 10 秒执行时间
-   - Pro 版本支持最长 60 秒
-
-2. **API 密钥错误**
-   - 检查环境变量是否正确设置
-   - 确认 v0 API 密钥有效
-
-3. **构建失败**
-   - 检查 `package.json` 中的依赖
-   - 查看 Vercel 构建日志
-
-### 调试步骤
-
-1. 查看 Vercel Functions 日志
-2. 检查 Next.js 构建输出
-3. 验证环境变量配置
-
-## 性能优化
-
-### 建议配置
-
-1. **函数超时设置**
-   ```json
-   {
-     "functions": {
-       "app/api/v0-generate/route.ts": { "maxDuration": 30 },
-       "api/v0-python-pipeline.py": { "maxDuration": 25 }
-     }
-   }
-   ```
-
-2. **缓存策略**
-   - Vercel 自动缓存静态资源
-   - API 响应可考虑添加缓存头
-
-## 维护建议
-
-1. **定期更新依赖**
-2. **监控函数执行时间**
-3. **检查 API 密钥有效期**
-4. **备份重要配置**
-
-## 支持
-
-如果遇到部署问题：
-1. 检查 Vercel 控制台日志
-2. 参考 [Vercel 文档](https://vercel.com/docs)
-3. 查看项目 Issues
+### 调试方法
+- 查看 GitHub Actions 构建日志
+- 检查浏览器开发者工具的网络请求
+- 查看后端服务器日志
