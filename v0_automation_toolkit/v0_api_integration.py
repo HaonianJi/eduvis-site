@@ -17,6 +17,12 @@ from v0_api_call import call_v0
 from auto_project_builder import AutoProjectBuilder
 
 
+def run_pipeline_from_prompt(prompt_content, api_key):
+    """Callable function for serverless environments."""
+    integration = V0ApiIntegration()
+    return integration.run_pipeline(prompt_content, api_key)
+
+
 class V0ApiIntegration:
     def __init__(self):
         self.project_builder = AutoProjectBuilder()
@@ -114,27 +120,29 @@ class V0ApiIntegration:
             
             print(f"✅ 项目构建成功: {project_path}", file=sys.stderr)
             
-            # 启动开发服务器
-            print("🚀 启动开发服务器...", file=sys.stderr)
-            port = self.start_dev_server(project_path)
+            # In a serverless environment, we don't start a server.
+            # Instead, we read the generated files and return their content.
+            print("📦 正在打包项目文件...", file=sys.stderr)
             
-            if not port:
-                print("❌ 服务器启动失败", file=sys.stderr)
-                return {"success": False, "error": "Dev server start failed"}
-            
-            project_url = f"http://localhost:{port}"
-            print(f"🎉 项目成功运行在: {project_url}", file=sys.stderr)
-            
-            # 输出成功结果到stdout供Node.js读取
+            files = []
+            project_path_obj = Path(project_path)
+            for file_path in project_path_obj.glob('**/*'):
+                if file_path.is_file():
+                    try:
+                        content = file_path.read_text(encoding='utf-8')
+                        relative_path = str(file_path.relative_to(project_path_obj))
+                        files.append({"path": relative_path, "content": content})
+                    except Exception as e:
+                        print(f"⚠️  无法读取文件 {file_path}: {e}", file=sys.stderr)
+
             result = {
                 "success": True,
-                "projectUrl": project_url,
+                "files": files,
                 "projectPath": str(project_path),
-                "port": port,
-                "message": f"项目成功生成并运行在端口 {port}"
+                "message": f"项目文件成功生成在 {project_path}"
             }
             
-            print(json.dumps(result))
+            # For serverless, we return the result directly
             return result
             
         except Exception as e:
@@ -221,6 +229,31 @@ def main():
         print(json.dumps({"success": False, "error": str(e)}))
         sys.exit(1)
 
+
+def main():
+    """主函数 - 从stdin读取参数"""
+    try:
+        problem_content = input().strip()
+        if not problem_content:
+            print(json.dumps({"success": False, "error": "No problem content provided"}))
+            return
+        
+        api_key = os.environ.get('V0_API_KEY')
+        result = run_pipeline_from_prompt(problem_content, api_key)
+        
+        # The original script printed the result to stdout for Node.js.
+        # We'll keep this for potential local testing.
+        print(json.dumps(result))
+
+        if not result.get("success"):
+            sys.exit(1)
+            
+    except (KeyboardInterrupt, EOFError):
+        print(json.dumps({"success": False, "error": "Process interrupted or no input"}), file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(json.dumps({"success": False, "error": str(e)}), file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

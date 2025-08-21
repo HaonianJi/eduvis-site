@@ -19,10 +19,11 @@ export async function POST(request: NextRequest) {
     // Call our powerful automation pipeline
     const result = await runV0AutomationPipeline(prompt, apiKey)
     
-    if (result.success) {
+        if (result.success && result.files) {
+      // The pipeline now returns file content directly
       return NextResponse.json({
         success: true,
-        projectUrl: result.projectUrl,
+        files: result.files,
         projectPath: result.projectPath,
         message: result.message
       })
@@ -66,137 +67,38 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function runV0AutomationPipeline(prompt: string, apiKey: string) {
-  return new Promise<{success: boolean, projectUrl?: string, projectPath?: string, message?: string, error?: string}>((resolve) => {
-    const toolkitPath = path.join(process.cwd(), "v0_automation_toolkit")
-    const scriptPath = path.join(toolkitPath, "v0_api_integration.py")
-    
-    console.log(`📁 Toolkit path: ${toolkitPath}`)
-    console.log(`🐍 Script path: ${scriptPath}`)
+async function runV0AutomationPipeline(prompt: string, apiKey: string): Promise<{success: boolean, files?: any[], projectPath?: string, message?: string, error?: string}> {
+  // In a serverless architecture, we call our Python endpoint via HTTP
+  const pythonApiUrl = `${process.env.VERCEL_URL ? 'https' : 'http'}://${process.env.VERCEL_URL || 'localhost:3000'}/api/v0-python-pipeline`;
 
-    // Validate API key
-    if (!apiKey || apiKey.trim() === "") {
-      console.warn("⚠️ No API key provided, pipeline will fail")
-      resolve({
-        success: false,
-        error: "API key is required for v0 project generation"
-      })
-      return
+  console.log(`📞 Calling Python pipeline at: ${pythonApiUrl}`);
+
+  try {
+    const response = await fetch(pythonApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({ prompt }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json();
+      const errorMessage = errorBody.error || `Python API failed with status ${response.status}`;
+      console.error('🔥 Python pipeline error:', errorMessage);
+      return { success: false, error: errorMessage };
     }
 
-    // Prepare environment variables
-    const env = { ...process.env }
-    env.V0_API_KEY = apiKey.trim()
+    const result = await response.json();
+    return result; // The Python function now returns the file structure
 
-    // Run the Python pipeline
-        const pythonProcess = spawn("python", [scriptPath], {
-      cwd: toolkitPath,
-      env: env,
-      stdio: ['pipe', 'pipe', 'pipe']
-    })
+  } catch (error) {
+    console.error('🔥 Failed to fetch from Python pipeline:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error during fetch';
+    return { success: false, error: `Network error or failed to connect to Python pipeline: ${errorMessage}` };
+  }
 
-    let stdout = ""
-    let stderr = ""
-
-    // Send the prompt to the Python process
-    pythonProcess.stdin.write(prompt + "\n")
-    pythonProcess.stdin.end()
-
-    pythonProcess.stdout.on("data", (data) => {
-      const output = data.toString()
-      stdout += output
-      console.log("📝 Pipeline stdout:", output.trim())
-    })
-
-    pythonProcess.stderr.on("data", (data) => {
-      const error = data.toString()
-      stderr += error
-      console.log("📝 Pipeline stderr:", error.trim()) // Changed from error to log
-    })
-
-    pythonProcess.on("close", (code) => {
-      console.log(`🏁 Pipeline finished with code: ${code}`)
-      
-      if (code === 0) {
-        try {
-          // Try to parse JSON result from stdout
-          const lines = stdout.trim().split('\n')
-          const lastLine = lines[lines.length - 1]
-          
-          if (lastLine.startsWith('{')) {
-            const result = JSON.parse(lastLine)
-            if (result.success && result.projectUrl) {
-              resolve({
-                success: true,
-                projectUrl: result.projectUrl,
-                projectPath: result.projectPath,
-                message: result.message || `Successfully generated project at ${result.projectUrl}`
-              })
-              return
-            }
-          }
-          
-          // Fallback: extract URL from any line
-          const urlMatch = stdout.match(/http:\/\/localhost:(\d+)/)
-          if (urlMatch) {
-            const projectUrl = urlMatch[0]
-            const port = urlMatch[1]
-            
-            resolve({
-              success: true,
-              projectUrl: projectUrl,
-              projectPath: `Generated project running on port ${port}`,
-              message: `🎉 Successfully generated interactive educational project! Running at ${projectUrl}`
-            })
-          } else {
-            resolve({
-              success: false,
-              error: "Pipeline completed but no valid result found in output"
-            })
-          }
-        } catch (parseError) {
-          console.error("Failed to parse pipeline output:", parseError)
-          resolve({
-            success: false,
-            error: `Pipeline output parsing failed: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
-          })
-        }
-      } else {
-        // Check for specific error patterns
-        let errorMessage = `Pipeline failed with exit code ${code}`
-        
-        if (stderr.includes('401 Unauthorized')) {
-          errorMessage = "Invalid or expired API key. Please check your v0 API key."
-        } else if (stderr.includes('SSL')) {
-          errorMessage = "Network connection issue. Please try again."
-        } else if (stderr.includes('Missing API key')) {
-          errorMessage = "API key is required for v0 project generation."
-        }
-        
-        resolve({
-          success: false,
-          error: errorMessage
-        })
-      }
-    })
-
-    pythonProcess.on("error", (error) => {
-      console.error("🔥 Process error:", error)
-      resolve({
-        success: false,
-        error: `Failed to start pipeline: ${error.message}`
-      })
-    })
-
-    // Set a timeout for the pipeline
-    setTimeout(() => {
-      pythonProcess.kill()
-      resolve({
-        success: false,
-        error: "Pipeline timed out after 6 minutes. The process may still be running in the background."
-      })
-    }, 360000) // 6 minutes timeout - allows for shadcn-ui component installation
-  })
 }
 
 function generateEnhancedMockVisualization(prompt: string): string {
