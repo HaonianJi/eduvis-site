@@ -1,10 +1,15 @@
 {
   "functions": {
-    "app/api/v0-generate/route.ts": {
+    "app/api/**/*.ts": {
       "maxDuration": 30
-    },
-    "api/v0-python-pipeline.py": {
-      "maxDuration": 25
+    }
+  },
+  "env": {
+    "V0_API_KEY": "@v0_api_key"
+  },
+  "build": {
+    "env": {
+      "V0_API_KEY": "@v0_api_key"
     }
   }
 }

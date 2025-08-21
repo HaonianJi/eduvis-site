@@ -77,50 +77,33 @@ async function runV0AutomationPipeline(prompt: string, apiKey: string) {
       }
     }
 
-    console.log("🚀 Calling Vercel Python function...")
+    console.log("🚀 Calling v0 API directly...")
     
-    // Call the Vercel Python function
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : '')
+    // Call v0 API directly from Next.js
+    const v0Response = await callV0Api(prompt, apiKey.trim())
     
-    const response = await fetch(`${baseUrl}/api/v0-python-pipeline`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        prompt: prompt 
-      })
-    })
-    
-    // Set API key as environment variable for the Python function
-    process.env.V0_API_KEY = apiKey.trim()
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error(`Python function failed: ${response.status} ${errorText}`)
+    if (!v0Response.success) {
       return {
         success: false,
-        error: `Generation failed: ${response.status} ${errorText}`
+        error: v0Response.error || "Failed to generate project"
       }
     }
 
-    const result = await response.json()
+    // Extract files from response
+    const files = extractFilesFromResponse(v0Response.data || '')
     
-    if (result.success) {
-      // For Vercel deployment, we return the generated files instead of a running server
-      return {
-        success: true,
-        files: result.files,
-        message: result.message || "Project files generated successfully",
-        note: "Files generated for static hosting"
-      }
-    } else {
+    if (!files || files.length === 0) {
       return {
         success: false,
-        error: result.error || "Generation failed"
+        error: "No files generated from v0 response"
       }
+    }
+
+    return {
+      success: true,
+      files: files,
+      message: "Project files generated successfully",
+      note: "Files generated for Vercel deployment"
     }
 
   } catch (error) {
@@ -129,6 +112,117 @@ async function runV0AutomationPipeline(prompt: string, apiKey: string) {
       success: false,
       error: `Pipeline execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
     }
+  }
+}
+
+async function callV0Api(prompt: string, apiKey: string) {
+  try {
+    const url = "https://api.v0.dev/chat"
+    const headers = {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    }
+    
+    const payload = {
+      "model": "v0",
+      "messages": [
+        {
+          "role": "user", 
+          "content": prompt
+        }
+      ]
+    }
+    
+    console.log(`🚀 Calling v0 API with prompt: ${prompt.substring(0, 100)}...`)
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: headers, 
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(20000) // 20 second timeout
+    })
+    
+    if (response.status === 401) {
+      return { success: false, error: 'Invalid or expired API key' }
+    } else if (!response.ok) {
+      return { success: false, error: `v0 API error: ${response.status} ${response.statusText}` }
+    }
+    
+    const result = await response.json()
+    
+    // Extract the generated content
+    if (result.choices && result.choices.length > 0) {
+      const content = result.choices[0]?.message?.content || ''
+      return { success: true, data: content }
+    } else {
+      return { success: false, error: 'No content in v0 API response' }
+    }
+        
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return { success: false, error: 'v0 API request timed out' }
+    }
+    return { success: false, error: `v0 API call failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
+  }
+}
+
+function extractFilesFromResponse(content: string) {
+  const files: Array<{path: string, content: string}> = []
+  
+  try {
+    // Look for code blocks with file paths
+    const filePattern = /```(?:tsx?|jsx?|css|html|json)\s*(?:\/\/\s*(.+?)\n)?([\s\S]*?)```/g
+    let match
+    let fileIndex = 0
+    
+    while ((match = filePattern.exec(content)) !== null) {
+      let filename = match[1]?.trim()
+      const fileContent = match[2]?.trim()
+      
+      if (!filename) {
+        // Generate default filename based on content
+        if (fileContent.includes('export default') && fileContent.includes('tsx')) {
+          filename = `component-${fileIndex}.tsx`
+        } else if (fileContent.includes('function') || fileContent.includes('const')) {
+          filename = `page-${fileIndex}.tsx`  
+        } else {
+          filename = `file-${fileIndex}.txt`
+        }
+      }
+      
+      if (fileContent) {
+        files.push({
+          path: filename,
+          content: fileContent
+        })
+        fileIndex++
+      }
+    }
+    
+    // If no files found with pattern, try to extract any code blocks
+    if (files.length === 0) {
+      const codeBlockPattern = /```\w*\n([\s\S]*?)\n```/g
+      let codeMatch
+      let codeIndex = 0
+      
+      while ((codeMatch = codeBlockPattern.exec(content)) !== null) {
+        const code = codeMatch[1]?.trim()
+        if (code) {
+          files.push({
+            path: `generated-${codeIndex}.tsx`,
+            content: code
+          })
+          codeIndex++
+        }
+      }
+    }
+    
+    console.log(`📁 Extracted ${files.length} files from v0 response`)
+    return files
+        
+  } catch (error) {
+    console.error('Error extracting files:', error)
+    return []
   }
 }
 
